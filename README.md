@@ -145,7 +145,7 @@ This project is built for **educational and research purposes only**. It should 
 
 ## 📬 Contact
 
-* 📧 Email: [AT07336@umbc.edu](mailto:shaikasadashraf1@gmail.com)
+* 📧 Email: [shaikasadashraf1@gmail.com](mailto:shaikasadashraf1@gmail.com)
 * 🐙 GitHub: [https://github.com/asadashrafshaik](https://github.com/asadashrafshaik)
 
 ---
