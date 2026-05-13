@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ARC · Financial Distress Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#ffffff;
+  --gray-50:#f8f9fc;
+  --gray-100:#f0f2f8;
+  --gray-200:#e2e6f0;
+  --gray-400:#9098b0;
+  --gray-600:#5a6380;
+  --gray-800:#1e2340;
+  --indigo-50:#eef0ff;
+  --indigo-100:#dde0ff;
+  --indigo-400:#6470f3;
+  --indigo-500:#4f5de8;
+  --indigo-600:#3d4bd6;
+  --violet-400:#9b6ef3;
+  --green-50:#edfaf4;
+  --green-400:#22c97a;
+  --green-600:#16a35e;
+  --yellow-50:#fffbeb;
+  --yellow-400:#f59e0b;
+  --orange-50:#fff7ed;
+  --orange-400:#fb923c;
+  --red-50:#fff1f2;
+  --red-400:#f43f5e;
+  --red-600:#e11d48;
+  --shadow-sm:0 1px 3px rgba(30,35,64,.08),0 1px 2px rgba(30,35,64,.04);
+  --shadow-md:0 4px 16px rgba(30,35,64,.10),0 2px 6px rgba(30,35,64,.06);
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:18px;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Plus Jakarta Sans',sans-serif;
+}
+body{font-family:var(--sans);background:var(--gray-50);color:var(--gray-800);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+nav{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo svg{width:32px;height:32px;flex-shrink:0}
+.nav-brand{font-weight:800;font-size:1.1rem;letter-spacing:-.02em;color:var(--gray-800)}
+.nav-brand span{color:var(--indigo-500)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-pill{font-size:.72rem;font-weight:500;color:var(--gray-600);background:var(--gray-100);padding:4px 12px;border-radius:20px;}
+.nav-badge{background:var(--indigo-50);color:var(--indigo-600);font-size:.72rem;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--indigo-100);letter-spacing:.04em;}
+
+/* ── PAGE ── */
+.page{max-width:1060px;margin:0 auto;padding:40px 24px 80px}
+
+/* ── HERO ── */
+.hero{text-align:center;margin-bottom:40px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:var(--indigo-50);color:var(--indigo-600);font-size:.75rem;font-weight:600;padding:5px 14px;border-radius:20px;border:1px solid var(--indigo-100);margin-bottom:16px;letter-spacing:.04em;}
+.hero-title{font-size:2.6rem;font-weight:800;letter-spacing:-.03em;color:var(--gray-800);line-height:1.15;margin-bottom:12px;}
+.hero-title em{font-style:normal;color:var(--indigo-500)}
+.hero-sub{font-size:1rem;color:var(--gray-600);max-width:520px;margin:0 auto 32px;line-height:1.65}
+
+/* ── SEARCH ── */
+.search-card{background:var(--white);border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-md);max-width:640px;margin:0 auto 48px;}
+.search-label{font-size:.8rem;font-weight:600;color:var(--gray-600);margin-bottom:10px;letter-spacing:.04em;text-transform:uppercase}
+.search-row{display:flex;gap:10px}
+.search-input{flex:1;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:13px 16px;font-family:var(--mono);font-size:.95rem;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color .15s,box-shadow .15s;}
+.search-input::placeholder{color:var(--gray-400);font-family:var(--sans)}
+.search-input:focus{border-color:var(--indigo-400);background:var(--white);box-shadow:0 0 0 3px var(--indigo-50)}
+.search-btn{background:var(--indigo-500);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px 24px;font-family:var(--sans);font-size:.9rem;font-weight:700;cursor:pointer;transition:background .15s,transform .1s;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+.search-btn:hover{background:var(--indigo-600)}
+.search-btn:active{transform:scale(.97)}
+.search-btn:disabled{background:var(--gray-400);cursor:not-allowed}
+.search-hints{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hint-chip{font-size:.75rem;color:var(--gray-600);background:var(--gray-100);border:1px solid var(--gray-200);border-radius:20px;padding:3px 10px;cursor:pointer;transition:all .15s;font-family:var(--mono);}
+.hint-chip:hover{background:var(--indigo-50);color:var(--indigo-500);border-color:var(--indigo-100)}
+
+/* ── EMPTY STATE ── */
+.empty-state{background:var(--white);border:1.5px dashed var(--gray-200);border-radius:var(--radius-lg);padding:56px 24px;text-align:center;}
+.empty-icon{width:56px;height:56px;background:var(--indigo-50);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.empty-icon svg{width:28px;height:28px;stroke:var(--indigo-500);stroke-width:1.5;fill:none}
+.empty-title{font-size:1.1rem;font-weight:700;color:var(--gray-800);margin-bottom:6px}
+.empty-sub{font-size:.875rem;color:var(--gray-600);max-width:380px;margin:0 auto;line-height:1.6}
+
+/* ── COMPANY HEADER ── */
+.company-header{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px 28px;box-shadow:var(--shadow-sm);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+.company-name{font-size:1.5rem;font-weight:800;color:var(--gray-800);letter-spacing:-.02em}
+.company-meta{font-size:.78rem;color:var(--gray-400);margin-top:4px;font-family:var(--mono)}
+.score-display{text-align:right}
+.score-label{font-size:.68rem;font-weight:600;color:var(--gray-400);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.score-number{font-size:3rem;font-weight:800;line-height:1;letter-spacing:-.03em}
+.risk-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.06em;margin-top:8px;}
+
+/* ── METRICS GRID ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;}
+.metric-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:18px 20px;box-shadow:var(--shadow-sm);}
+.metric-label{font-size:.67rem;font-weight:600;color:var(--gray-400);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.metric-value{font-size:1.5rem;font-weight:700;line-height:1;letter-spacing:-.02em}
+.metric-sub{font-size:.72rem;color:var(--gray-400);margin-top:6px}
+
+/* ── SECTION HEADER ── */
+.section-header{font-size:.72rem;font-weight:700;color:var(--gray-400);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+
+/* ── COUNTER STRATEGY ── */
+.cs-wrap{margin-bottom:20px}
+.cs-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px 20px;margin-bottom:10px;box-shadow:var(--shadow-sm);border-left:4px solid var(--gray-200);}
+.cs-card.lower{border-left-color:var(--violet-400)}
+.cs-card.raise{border-left-color:var(--orange-400)}
+.cs-card.info{border-left-color:var(--gray-400)}
+.cs-title{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-weight:700;font-size:.9rem;color:var(--gray-800)}
+.cs-pill{font-size:.65rem;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.05em}
+.cs-desc{font-size:.82rem;color:var(--gray-600);line-height:1.6}
+.cs-scores{font-size:.78rem;color:var(--gray-400);margin-top:8px;font-family:var(--mono)}
+
+/* ── CHART ── */
+.chart-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);margin-bottom:20px;}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.chart-title{font-size:1rem;font-weight:700;color:var(--gray-800)}
+.chart-legend{display:flex;gap:16px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--gray-600)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.chart-area{height:240px;position:relative}
+
+/* ── TABLE ── */
+.table-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead{background:var(--gray-50)}
+th{padding:11px 16px;text-align:left;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-400);border-bottom:1px solid var(--gray-200);}
+td{padding:11px 16px;border-bottom:1px solid var(--gray-100);color:var(--gray-600)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--gray-50)}
+.td-mono{font-family:var(--mono);font-size:.78rem}
+
+/* ── SPINNER ── */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:inline-block;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ERROR ── */
+.error-box{background:var(--red-50);border:1px solid #fecdd3;border-radius:var(--radius-md);padding:16px 20px;font-size:.875rem;color:var(--red-600);display:flex;align-items:center;gap:12px;}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--gray-200);padding:20px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.72rem;color:var(--gray-400);max-width:1060px;margin:0 auto;}
+
+/* ── SHAP ── */
+.shap-section{margin-bottom:20px}
+.shap-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);}
+.shap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.shap-title{font-size:1rem;font-weight:700;color:var(--gray-800)}
+.shap-subtitle{font-size:.75rem;color:var(--gray-400)}
+.shap-legend{display:flex;gap:16px;font-size:.72rem;color:var(--gray-600)}
+.shap-legend-item{display:flex;align-items:center;gap:5px}
+.shap-legend-dot{width:10px;height:10px;border-radius:2px}
+.shap-bars{display:flex;flex-direction:column;gap:8px}
+.shap-row{display:grid;grid-template-columns:180px 1fr 60px;align-items:center;gap:12px}
+.shap-label{font-size:.78rem;color:var(--gray-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.shap-bar-wrap{position:relative;height:24px;background:var(--gray-100);border-radius:4px;overflow:hidden}
+.shap-bar{height:100%;border-radius:4px;transition:width .4s ease;display:flex;align-items:center;padding:0 6px}
+.shap-bar.raise{background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.3)}
+.shap-bar.lower{background:rgba(22,163,94,.18);border:1px solid rgba(22,163,94,.3)}
+.shap-bar-label{font-size:.68rem;font-weight:700;white-space:nowrap}
+.shap-bar.raise .shap-bar-label{color:#e11d48}
+.shap-bar.lower .shap-bar-label{color:#16a35e}
+.shap-value{font-size:.75rem;font-family:var(--mono);font-weight:600;text-align:right}
+.shap-value.raise{color:#e11d48}
+.shap-value.lower{color:#16a35e}
+.shap-base{font-size:.72rem;color:var(--gray-400);margin-top:12px;text-align:center}
+
+
+/* SHAP */
+.shap-section{margin-bottom:20px}
+.shap-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);}
+.shap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.shap-title{font-size:1rem;font-weight:700;color:var(--gray-800)}
+.shap-subtitle{font-size:.75rem;color:var(--gray-400)}
+.shap-legend{display:flex;gap:16px;font-size:.72rem;color:var(--gray-600)}
+.shap-legend-item{display:flex;align-items:center;gap:5px}
+.shap-legend-dot{width:10px;height:10px;border-radius:2px}
+.shap-bars{display:flex;flex-direction:column;gap:8px}
+.shap-row{display:grid;grid-template-columns:180px 1fr 60px;align-items:center;gap:12px}
+.shap-label{font-size:.78rem;color:var(--gray-600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.shap-bar-wrap{position:relative;height:24px;background:var(--gray-100);border-radius:4px;overflow:hidden}
+.shap-bar{height:100%;border-radius:4px;transition:width .4s ease;display:flex;align-items:center;padding:0 6px}
+.shap-bar.raise{background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.3)}
+.shap-bar.lower{background:rgba(22,163,94,.18);border:1px solid rgba(22,163,94,.3)}
+.shap-bar-label{font-size:.68rem;font-weight:700;white-space:nowrap}
+.shap-bar.raise .shap-bar-label{color:#e11d48}
+.shap-bar.lower .shap-bar-label{color:#16a35e}
+.shap-value{font-size:.75rem;font-family:var(--mono);font-weight:600;text-align:right}
+.shap-value.raise{color:#e11d48}
+.shap-value.lower{color:#16a35e}
+.shap-base{font-size:.72rem;color:var(--gray-400);margin-top:12px;text-align:center}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#eef0ff"/>
+      <circle cx="6"  cy="16" r="2"   fill="#6470f3"/>
+      <circle cx="11" cy="9"  r="1.5" fill="#9b6ef3"/>
+      <circle cx="16" cy="6"  r="2.5" fill="#4f5de8"/>
+      <circle cx="21" cy="9"  r="1.5" fill="#9b6ef3"/>
+      <circle cx="26" cy="16" r="2"   fill="#6470f3"/>
+      <polyline points="6,16 11,9 16,6 21,9 26,16" stroke="#6470f3" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
+    </svg>
+    <span class="nav-brand">ARC <span>Financial</span></span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-pill">SEC EDGAR · XBRL</span>
+    <span class="nav-badge">LightGBM v3 · 35 features · Calibrated</span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><circle cx="6" cy="6" r="4"/></svg>
+      DS606 Capstone · Buyback-Aware Model
+    </div>
+    <h1 class="hero-title">Predict Financial<br/><em>Distress Risk</em> Instantly</h1>
+    <p class="hero-sub">Enter any US-listed ticker. We pull live SEC 10-K filings, compute 35 financial features, and score distress probability with counter-strategy detection.</p>
+  </div>
+
+  <div class="search-card">
+    <div class="search-label">Company Ticker</div>
+    <div class="search-row">
+      <input id="tickerInput" class="search-input" type="text" placeholder="AAPL, HTZ, BBBY, MSFT..." maxlength="10"/>
+      <button class="search-btn" id="analyzeBtn" onclick="runAnalysis()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="5"/><path d="m11 11 3 3"/></svg>
+        Analyze
+      </button>
+    </div>
+    <div class="search-hints">
+      <span class="hint-chip" onclick="setTicker('AAPL')">AAPL</span>
+      <span class="hint-chip" onclick="setTicker('MSFT')">MSFT</span>
+      <span class="hint-chip" onclick="setTicker('HTZ')">HTZ</span>
+      <span class="hint-chip" onclick="setTicker('BBBY')">BBBY</span>
+      <span class="hint-chip" onclick="setTicker('GE')">GE</span>
+      <span class="hint-chip" onclick="setTicker('BA')">BA</span>
+      <span class="hint-chip" onclick="setTicker('CCL')">CCL</span>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="empty-title">Ready to analyze</div>
+      <div class="empty-sub">Enter a US-listed stock ticker above. Data is fetched live from SEC EDGAR XBRL filings.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>ARC Financial Distress Analyzer · DS606 Capstone</span>
+  <span>LightGBM v1 · 35 Features · Buyback Fix Applied</span>
+  <span>Data Source: SEC EDGAR XBRL</span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let chartInst = null;
+
+function setTicker(t){ document.getElementById('tickerInput').value = t; }
+document.getElementById('tickerInput').addEventListener('keydown', e => { if(e.key==='Enter') runAnalysis(); });
+
+function riskColor(s){
+  if(s>=75) return {bg:'#fff1f2',text:'#e11d48',badge:'#fecdd3'};
+  if(s>=50) return {bg:'#fff7ed',text:'#c2410c',badge:'#fed7aa'};
+  if(s>=25) return {bg:'#fffbeb',text:'#b45309',badge:'#fde68a'};
+  return {bg:'#edfaf4',text:'#16a35e',badge:'#a7f3d0'};
+}
+function riskLabel(t){ return {LOW:'Low Risk',MODERATE:'Moderate Risk',HIGH:'High Risk',CRITICAL:'Critical Risk'}[t]||t; }
+function zoneColor(z){
+  if(z==='Distress Zone') return '#e11d48';
+  if(z==='Grey Zone') return '#b45309';
+  return '#16a35e';
+}
+function sf(v,d=2){ return v!=null ? Number(v).toFixed(d) : '—'; }
+function pct(v,d=2){ return v!=null ? (v*100).toFixed(d)+'%' : '—'; }
+
+async function runAnalysis(){
+  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+  if(!ticker) return;
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Analyzing...';
+  document.getElementById('results').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#6470f3" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="empty-title">Fetching SEC EDGAR data for ${ticker}</div>
+      <div class="empty-sub">Pulling 10-K filings and computing 35 features. First run may take 15–30s.</div>
+    </div>`;
+  try {
+    const res  = await fetch('/api/v1/analyze/' + ticker);
+    const data = await res.json();
+    if(!res.ok){ showError(data.detail || 'Analysis failed for ' + ticker); return; }
+    renderResults(data);
+  } catch(err) {
+    showError('Network error — is the FastAPI server running?');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="7" r="5"/><path d="m11 11 3 3"/></svg> Analyze';
+  }
+}
+
+function showError(msg){
+  document.getElementById('results').innerHTML = `
+    <div class="error-box">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="9" r="8"/><line x1="9" y1="6" x2="9" y2="9.5"/><circle cx="9" cy="12.5" r=".5" fill="currentColor"/></svg>
+      ${msg}
+    </div>`;
+}
+
+function renderResults(d){
+  const rc   = riskColor(d.latest_risk_score);
+  const rl   = riskLabel(d.latest_risk_tier);
+  const zc   = zoneColor(d.latest_altman_zone);
+  const roaC = (d.latest_roa||0)>=0 ? '#16a35e' : '#e11d48';
+  const mgC  = (d.latest_net_profit_margin||0)>=0 ? '#16a35e' : '#e11d48';
+  const crC  = (d.latest_current_ratio||0)>=1 ? '#16a35e' : '#e11d48';
+
+  // Counter-strategy cards
+  let csHtml = '';
+  if(d.counter_strategies && d.counter_strategies.length > 0){
+    let cards = '';
+    for(const cs of d.counter_strategies){
+      const dir    = cs.adjustment_applied ? (cs.adjusted_score < cs.raw_score ? 'lower' : 'raise') : 'info';
+      const pColor = {lower:'#7c3aed', raise:'#ea580c', info:'#9098b0'}[dir];
+      const pLabel = {lower:'SCORE LOWERED', raise:'SCORE RAISED', info:'INFORMATIONAL'}[dir];
+      const sevColor = {low:'#9098b0', medium:'#b45309', high:'#e11d48'}[cs.severity] || '#9098b0';
+      const sevDot = cs.severity ? `<span style="width:7px;height:7px;border-radius:50%;background:${sevColor};display:inline-block;flex-shrink:0;margin-left:2px" title="Severity: ${cs.severity}"></span>` : '';
+      const scores = cs.adjustment_applied
+        ? `<div class="cs-scores">Raw: ${cs.raw_score.toFixed(1)}% → Adjusted: <strong style="color:${pColor}">${cs.adjusted_score.toFixed(1)}%</strong></div>` : '';
+      cards += `<div class="cs-card ${dir}">
+        <div class="cs-title">
+          ${cs.strategy_detected}
+          ${sevDot}
+          <span class="cs-pill" style="background:${pColor}18;color:${pColor};border:1px solid ${pColor}30">${pLabel}</span>
+        </div>
+        <div class="cs-desc">${cs.description}</div>
+        ${scores}
+      </div>`;
+    }
+    csHtml = `<div class="cs-wrap"><div class="section-header">Counter-Strategy Detections (${d.counter_strategies.length})</div>${cards}</div>`;
+  }
+
+  // Table rows (newest first)
+  const rows = [...d.history].reverse().map(y => {
+    const c = riskColor(y.risk_score);
+    const flags = [
+      y.buyback_flag     ? '<span style="font-size:.7rem;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;padding:2px 7px;border-radius:20px;font-weight:600">Buyback</span>'  : '',
+      y.is_growth_company? '<span style="font-size:.7rem;background:#edfaf4;color:#16a35e;border:1px solid #a7f3d0;padding:2px 7px;border-radius:20px;font-weight:600">Growth</span>' : '',
+    ].filter(Boolean).join(' ');
+    return `<tr>
+      <td class="td-mono" style="font-weight:600;color:var(--gray-800)">${y.fiscal_year}</td>
+      <td class="td-mono"><span style="background:${c.bg};color:${c.text};padding:3px 10px;border-radius:20px;font-weight:700;font-size:.78rem">${y.risk_score.toFixed(1)}%</span></td>
+      <td class="td-mono" style="color:${y.altman_z!=null?(y.altman_z<1.81?'#e11d48':y.altman_z<2.99?'#b45309':'#16a35e'):'var(--gray-400)'}">${sf(y.altman_z)}</td>
+      <td class="td-mono">${y.debt_ratio!=null?(y.debt_ratio*100).toFixed(1)+'%':'—'}</td>
+      <td class="td-mono" style="color:${(y.return_on_assets||0)>=0?'#16a35e':'#e11d48'}">${y.return_on_assets!=null?(y.return_on_assets*100).toFixed(2)+'%':'—'}</td>
+      <td class="td-mono" style="color:${(y.current_ratio||0)>=1?'#16a35e':'#e11d48'}">${sf(y.current_ratio)}x</td>
+      <td>${flags}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('results').innerHTML = `
+    <div class="company-header">
+      <div class="company-info">
+        <div class="company-name">${d.company_name}</div>
+        <div class="company-meta">${d.ticker} &nbsp;·&nbsp; CIK ${d.cik} &nbsp;·&nbsp; FY ${d.fiscal_year_range} &nbsp;·&nbsp; ${d.total_filings} annual filings</div>
+      </div>
+      <div class="score-display">
+        <div class="score-label">Distress Risk Score</div>
+        <div class="score-number" style="color:${rc.text}">${d.latest_risk_score.toFixed(1)}%</div>
+        <span class="risk-badge" style="background:${rc.bg};color:${rc.text};border:1px solid ${rc.badge}">${rl}</span>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Altman Z-Score</div>
+        <div class="metric-value" style="color:${zc}">${sf(d.latest_altman_z)}</div>
+        <div class="metric-sub" style="color:${zc}">${d.latest_altman_zone}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Debt Ratio</div>
+        <div class="metric-value" style="color:var(--indigo-500)">${pct(d.latest_debt_ratio)}</div>
+        <div class="metric-sub">Latest fiscal year</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Return on Assets</div>
+        <div class="metric-value" style="color:${roaC}">${pct(d.latest_roa)}</div>
+        <div class="metric-sub">${(d.latest_roa||0)>=0?'Profitable':'Loss-making'}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Current Ratio</div>
+        <div class="metric-value" style="color:${crC}">${d.latest_current_ratio!=null?d.latest_current_ratio.toFixed(2)+'x':'—'}</div>
+        <div class="metric-sub">${(d.latest_current_ratio||0)>=1?'Liquid':'Illiquid'}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Net Profit Margin</div>
+        <div class="metric-value" style="color:${mgC}">${pct(d.latest_net_profit_margin)}</div>
+        <div class="metric-sub">${(d.latest_net_profit_margin||0)>=0?'Positive margin':'Negative margin'}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Model</div>
+        <div class="metric-value" style="color:var(--indigo-500);font-size:1.1rem">LightGBM v3</div>
+        <div class="metric-sub">${d.model_features} features · Calibrated · SHAP</div>
+      </div>
+    </div>
+
+    ${csHtml}
+
+    ${renderShap(d.shap_explanation)}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="chart-header">
+          <div class="chart-title">Distress Risk Score</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--indigo-400)"></div><span style="font-size:.75rem;color:var(--gray-600)">Risk %</span></div>
+        </div>
+        <div class="chart-area"><canvas id="riskChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="chart-header">
+          <div class="chart-title">Altman Z-Score</div>
+          <div style="display:flex;gap:10px;font-size:.72rem;color:var(--gray-400)">
+            <span style="color:#e11d48">&#9644; &lt;1.81 Distress</span>
+            <span style="color:#b45309">&#9644; &lt;2.99 Grey</span>
+            <span style="color:#16a35e">&#9644; Safe</span>
+          </div>
+        </div>
+        <div class="chart-area"><canvas id="zChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-header">Year-by-Year Breakdown</div>
+    <div class="table-card">
+      <table>
+        <thead><tr>
+          <th>Year</th><th>Risk Score</th><th>Altman Z</th>
+          <th>Debt Ratio</th><th>ROA</th><th>Current Ratio</th><th>Flags</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+
+  buildCharts(d.history);
+}
+
+
+function renderShap(shap) {
+  if (!shap || !shap.contributions || shap.contributions.length === 0) return '';
+  const maxAbs = Math.max(...shap.contributions.map(c => Math.abs(c.shap_value)));
+  const bars = shap.contributions.map(c => {
+    const pct  = Math.min((Math.abs(c.shap_value) / maxAbs) * 100, 100).toFixed(1);
+    const sign = c.shap_value > 0 ? '+' : '';
+    const vs   = sign + c.shap_value.toFixed(1) + '%';
+    return '<div class="shap-row">'
+      + '<div class="shap-label" title="'+c.label+'">'+c.label+'</div>'
+      + '<div class="shap-bar-wrap">'
+      + '<div class="shap-bar '+c.direction+'" style="width:'+pct+'%">'
+      + '<span class="shap-bar-label">'+vs+'</span>'
+      + '</div></div>'
+      + '<div class="shap-value '+c.direction+'">'+vs+'</div>'
+      + '</div>';
+  }).join('');
+  return '<div class="shap-section">'
+    + '<div class="section-header">Why This Score? \u2014 Feature Contributions (SHAP)</div>'
+    + '<div class="shap-card">'
+    + '<div class="shap-header"><div>'
+    + '<div class="shap-title">Score Explanation \u2014 FY'+shap.fiscal_year+'</div>'
+    + '<div class="shap-subtitle">How much each feature pushed the risk score up or down</div>'
+    + '</div><div class="shap-legend">'
+    + '<div class="shap-legend-item"><div class="shap-legend-dot" style="background:rgba(239,68,68,.4)"></div>Increases risk</div>'
+    + '<div class="shap-legend-item"><div class="shap-legend-dot" style="background:rgba(22,163,94,.4)"></div>Decreases risk</div>'
+    + '</div></div>'
+    + '<div class="shap-bars">'+bars+'</div>'
+    + '<div class="shap-base">Base rate (average company): '+shap.base_value.toFixed(1)+'%</div>'
+    + '</div></div>';
+}
+
+let chartZ = null;
+
+function buildCharts(history){
+  if(chartInst){ chartInst.destroy(); chartInst = null; }
+  if(chartZ){ chartZ.destroy(); chartZ = null; }
+
+  const labels = history.map(y => y.fiscal_year);
+  const tDef = {
+    backgroundColor:'#fff', borderColor:'#e2e6f0', borderWidth:1,
+    titleColor:'#1e2340', bodyColor:'#5a6380',
+    titleFont:{family:"'Plus Jakarta Sans'",size:12,weight:'700'},
+    bodyFont:{family:"'JetBrains Mono'",size:11}, padding:12
+  };
+
+  const ctx1 = document.getElementById('riskChart')?.getContext('2d');
+  if(ctx1){
+    chartInst = new Chart(ctx1, {
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          label:'Risk Score %',
+          data: history.map(y => y.risk_score),
+          borderColor:'#4f5de8', backgroundColor:'rgba(79,93,232,.08)',
+          borderWidth:2.5,
+          pointBackgroundColor: history.map(y => riskColor(y.risk_score).text),
+          pointRadius:4, pointHoverRadius:6, tension:.35, fill:true
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{...tDef, callbacks:{label: c => ' Risk: '+c.parsed.y.toFixed(1)+'%'}}
+        },
+        scales:{
+          x:{ticks:{color:'#9098b0',font:{family:"'Plus Jakarta Sans'",size:10}},grid:{color:'#f0f2f8'}},
+          y:{min:0,max:100,
+             ticks:{color:'#9098b0',font:{family:"'JetBrains Mono'",size:10},callback:v=>v+'%'},
+             grid:{color:'#f0f2f8'}}
+        }
+      }
+    });
+  }
+
+  const ctx2 = document.getElementById('zChart')?.getContext('2d');
+  if(ctx2){
+    const zValues = history.map(y => y.altman_z);
+    const validZ  = zValues.filter(v => v != null && !isNaN(v));
+    const zMin    = validZ.length ? parseFloat((Math.min(...validZ) - 0.4).toFixed(1)) : 0;
+    const zMax    = validZ.length ? parseFloat((Math.max(...validZ) + 0.4).toFixed(1)) : 5;
+    const ptColors = zValues.map(z => z==null?'#9098b0':z<1.81?'#e11d48':z<2.99?'#b45309':'#16a35e');
+
+    chartZ = new Chart(ctx2, {
+      type:'line',
+      data:{
+        labels,
+        datasets:[
+          {label:'d',data:labels.map(()=>1.81),borderColor:'rgba(225,29,72,.2)',borderWidth:1,borderDash:[4,3],pointRadius:0,fill:{target:'origin',above:'rgba(225,29,72,.04)'},tension:0},
+          {label:'g',data:labels.map(()=>2.99),borderColor:'rgba(180,83,9,.2)',borderWidth:1,borderDash:[4,3],pointRadius:0,fill:{target:0,above:'rgba(234,179,8,.04)'},tension:0},
+          {label:'Altman Z',data:zValues,borderColor:'#22c97a',backgroundColor:'transparent',
+           borderWidth:2.5,pointBackgroundColor:ptColors,pointRadius:4,pointHoverRadius:6,tension:.35}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{...tDef,
+            filter:item=>item.datasetIndex===2,
+            callbacks:{label:c=>' Z-Score: '+(c.parsed.y!=null?c.parsed.y.toFixed(2):'n/a')}
+          }
+        },
+        scales:{
+          x:{ticks:{color:'#9098b0',font:{family:"'Plus Jakarta Sans'",size:10}},grid:{color:'#f0f2f8'}},
+          y:{min:zMin,max:zMax,
+             ticks:{color:'#9098b0',font:{family:"'JetBrains Mono'",size:10},callback:v=>v.toFixed(1)},
+             grid:{color:'#f0f2f8'}}
+        }
+      }
+    });
+  }
+}
+</script>
+</body>
+</html>
